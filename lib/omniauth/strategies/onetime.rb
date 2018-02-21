@@ -184,13 +184,12 @@ module OmniAuth
       end
 
       def request_phase
-        email = request.params['email']
         plaintext = request.params['password']
 
-        if email.blank?
+        if email_param.blank?
           request_email
         elsif plaintext.blank?
-          request_password(email)
+          request_password(email_param)
         else
           fail!(:took_a_wrong_turn)
         end
@@ -198,18 +197,22 @@ module OmniAuth
 
       def callback_phase
         log :debug, 'STEP 3: verify password'
-        email = request.params['email']
         plaintext = request.params['password']
 
-        if verify_password(email, plaintext)
+        if verify_password(email_param, plaintext)
           # expire password
-          options[:password_cache].delete(email)
+          options[:password_cache].delete(email_param)
           super
         else
           fail!(:invalid_credentials)
         end
       end
 
+      private
+
+      def email_param
+        @email_param ||= request.params['email'].to_s.downcase
+      end
     end
   end
 end
